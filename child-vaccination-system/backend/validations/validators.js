@@ -39,7 +39,14 @@ const validateChildRegistration = [
 // Guardian validation
 const validateGuardianCreation = [
   body('name').trim().notEmpty().withMessage('Guardian name is required'),
-  body('relationship').isIn(['Mother', 'Father', 'Guardian', 'Grandparent', 'Other']).withMessage('Invalid relationship'),
+  body('relationship').custom((value) => {
+    const allowed = ['Mother', 'Father', 'Guardian', 'Grandparent', 'Other'];
+    if (!value) throw new Error('Guardian relationship is required');
+    if (!allowed.map(v => v.toLowerCase()).includes(String(value).toLowerCase())) {
+      throw new Error('Invalid relationship');
+    }
+    return true;
+  }),
   body('nationalId').trim().notEmpty().withMessage('National ID is required'),
   body('phoneNumber').isMobilePhone().withMessage('Invalid phone number'),
   body('email').isEmail().withMessage('Valid email is required for appointment reminders'),

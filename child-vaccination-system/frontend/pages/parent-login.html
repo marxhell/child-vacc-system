@@ -159,7 +159,13 @@
           body: JSON.stringify({ identifier, phoneNumber })
         });
 
-        const result = await response.json();
+        let result;
+        const responseText = await response.text();
+        try {
+          result = JSON.parse(responseText);
+        } catch {
+          result = { message: responseText };
+        }
 
         if (!response.ok) {
           throw new Error(result.message || 'Login failed');

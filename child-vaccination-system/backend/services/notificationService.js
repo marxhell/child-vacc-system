@@ -1,6 +1,7 @@
 const Notification = require('../models/Notification');
 const { sendPushNotification } = require('../config/firebase');
 const { NOTIFICATION_TYPES } = require('../config/constants');
+const emailService = require('../utils/emailService');
 
 // Helper: Save notification log to MongoDB
 const saveNotification = async ({ childId, guardianId, guardianEmail, notificationType, subject, message, relatedAppointment, scheduledFor }) => {
@@ -106,6 +107,18 @@ const sendVaccinationReminder = async ({ child, guardian, appointment, vaccine, 
     const body = `${childName} - ${vaccine} on ${formattedDate}`;
 
     console.log(`[Firebase] Reminder (${dayLabel}) for ${guardian.email}: ${title} - ${body}`);
+
+    // Also attempt to send email if SMTP credentials are provided
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      try {
+        await emailService.sendNotification(guardian.email, title, body, {
+          appointmentId: appointment._id.toString(),
+        });
+        console.log(`[Email] Reminder sent to ${guardian.email}`);
+      } catch (err) {
+        console.error('Failed to send email reminder:', err.message);
+      }
+    }
 
     const notifType = daysBefore === 7 ? NOTIFICATION_TYPES.REMINDER_7_DAYS
                      : daysBefore === 3 ? NOTIFICATION_TYPES.REMINDER_3_DAYS

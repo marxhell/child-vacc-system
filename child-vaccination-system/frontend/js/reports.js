@@ -32,7 +32,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ===== APPLY DATE FILTER =====
 
 async function applyDateFilter() {
-  loadAllReports();
+  await loadAllReports();
+  await downloadCurrentReportPdf();
+}
+
+function getActiveReportTab() {
+  const activeTab = document.querySelector('.nav-link.active');
+  return activeTab ? activeTab.getAttribute('data-bs-target') : '#immunizationTab';
+}
+
+async function downloadCurrentReportPdf() {
+  const activeTab = getActiveReportTab();
+  if (activeTab === '#coverageTab') return downloadCoveragePdf();
+  if (activeTab === '#overdueTab') return downloadOverduePdf();
+  if (activeTab === '#stockTab') return downloadStockPdf();
+  if (activeTab === '#usageTab') return downloadUsagePdf();
+  if (activeTab === '#appointmentTab') return downloadAppointmentPdf();
+  return downloadImmunizationPdf();
 }
 
 // ===== LOAD ALL REPORTS =====
@@ -65,6 +81,9 @@ async function loadImmunizationReport(startDate, endDate) {
 
     let html = `
       <div class="table-responsive">
+        <div class="d-flex justify-content-end mb-2">
+          <button class="btn btn-sm btn-outline-primary" onclick="downloadImmunizationPdf()">Download PDF</button>
+        </div>
         <table class="table table-hover">
           <thead class="table-light">
             <tr>
@@ -92,6 +111,17 @@ async function loadImmunizationReport(startDate, endDate) {
   }
 }
 
+async function downloadImmunizationPdf() {
+  try {
+    const blob = await downloadReportPdf('/reports/monthly-immunization.pdf');
+    const filename = `monthly-immunization.pdf`;
+    triggerFileDownload(blob, filename);
+  } catch (err) {
+    console.error('Error downloading immunization PDF:', err);
+    showErrorMessage('immunizationReport', 'Failed to download PDF');
+  }
+}
+
 // ===== COVERAGE REPORT =====
 // API: { totalChildren, vaccineStats: [{ vaccine, childrenVaccinated, coverage }] }
 
@@ -108,6 +138,9 @@ async function loadCoverageReport() {
     }
 
     let html = `
+      <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-sm btn-outline-primary" onclick="downloadCoveragePdf()">Download PDF</button>
+      </div>
       <p class="text-muted">Total registered children: <strong>${totalChildren}</strong></p>
       <div class="table-responsive">
         <table class="table table-hover">
@@ -142,6 +175,16 @@ async function loadCoverageReport() {
   }
 }
 
+async function downloadCoveragePdf() {
+  try {
+    const blob = await downloadReportPdf('/reports/vaccination-coverage.pdf');
+    triggerFileDownload(blob, 'vaccination-coverage.pdf');
+  } catch (err) {
+    console.error('Error downloading coverage PDF:', err);
+    showErrorMessage('coverageReport', 'Failed to download PDF');
+  }
+}
+
 // ===== OVERDUE REPORT =====
 // API: { totalOverdue, report: [{ child, vaccine, scheduledDate, ... }] }
 
@@ -157,6 +200,9 @@ async function loadOverdueReport() {
     }
 
     let html = `
+      <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-sm btn-outline-primary" onclick="downloadOverduePdf()">Download PDF</button>
+      </div>
       <div class="table-responsive">
         <table class="table table-hover">
           <thead class="table-light">
@@ -195,6 +241,16 @@ async function loadOverdueReport() {
   }
 }
 
+async function downloadOverduePdf() {
+  try {
+    const blob = await downloadReportPdf('/reports/overdue-vaccinations.pdf');
+    triggerFileDownload(blob, 'overdue-vaccinations.pdf');
+  } catch (err) {
+    console.error('Error downloading overdue PDF:', err);
+    showErrorMessage('overdueReport', 'Failed to download PDF');
+  }
+}
+
 // ===== STOCK REPORT =====
 // API: { report: [{ vaccine, totalAvailable, totalReceived, batches, minStockLevel, status }] }
 
@@ -210,6 +266,9 @@ async function loadStockReport() {
     }
 
     let html = `
+      <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-sm btn-outline-primary" onclick="downloadStockPdf()">Download PDF</button>
+      </div>
       <div class="table-responsive">
         <table class="table table-hover">
           <thead class="table-light">
@@ -246,6 +305,16 @@ async function loadStockReport() {
   } catch (error) {
     console.error('Error:', error);
     showErrorMessage('stockReport', `Error: ${error.message}`);
+  }
+}
+
+async function downloadStockPdf() {
+  try {
+    const blob = await downloadReportPdf('/reports/vaccine-stock.pdf');
+    triggerFileDownload(blob, 'vaccine-stock.pdf');
+  } catch (err) {
+    console.error('Error downloading stock PDF:', err);
+    showErrorMessage('stockReport', 'Failed to download PDF');
   }
 }
 
@@ -370,5 +439,26 @@ async function loadAppointmentReport() {
     console.error('Error:', error);
     showErrorMessage('appointmentReport', `Error: ${error.message}`);
   }
+}
+
+async function downloadAppointmentPdf() {
+  try {
+    const blob = await downloadReportPdf('/reports/appointments.pdf');
+    triggerFileDownload(blob, 'appointments-report.pdf');
+  } catch (err) {
+    console.error('Error downloading appointment PDF:', err);
+    showErrorMessage('appointmentReport', 'Failed to download PDF');
+  }
+}
+
+function triggerFileDownload(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 }
 

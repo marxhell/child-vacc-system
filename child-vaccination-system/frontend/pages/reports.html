@@ -25,7 +25,10 @@
   <!-- Popup Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h6>NAVIGATION</h6>
+      <div class="sidebar-brand">
+        <div class="brand-logo">CV</div>
+        <h6>Child Vaccination</h6>
+      </div>
       <button class="btn-close btn-close-white" onclick="closeSidebar()"></button>
     </div>
     <ul class="nav flex-column" id="sidebarMenu"></ul>
@@ -47,8 +50,9 @@
             <label class="form-label">End Date</label>
             <input type="date" class="form-control" id="endDate">
           </div>
-          <div class="col-md-4 d-flex align-items-end">
-            <button class="btn btn-primary w-100" onclick="applyDateFilter()">Generate Reports</button>
+          <div class="col-md-4 d-flex align-items-end gap-2">
+            <button class="btn btn-primary w-50" onclick="applyDateFilter()">Generate Reports</button>
+            <button class="btn btn-outline-primary w-50" onclick="downloadCurrentReportPdf()">Download Current PDF</button>
           </div>
         </div>
 

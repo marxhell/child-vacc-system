@@ -26,7 +26,10 @@
   <!-- Popup Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h6>NAVIGATION</h6>
+      <div class="sidebar-brand">
+        <div class="brand-logo">CV</div>
+        <h6>Child Vaccination</h6>
+      </div>
       <button class="btn-close btn-close-white" onclick="closeSidebar()"></button>
     </div>
     <ul class="nav flex-column" id="sidebarMenu"></ul>
@@ -113,10 +116,7 @@
                     <label class="form-label">Vaccine Batch Number *</label>
                     <input type="text" class="form-control" id="batchNumber" required>
                   </div>
-                  <div class="mb-3">
-                    <label class="form-label">Notes</label>
-                    <textarea class="form-control" id="notes" rows="3"></textarea>
-                  </div>
+                  <!-- notes removed -->
                   <button type="submit" class="btn btn-primary">Record Vaccination</button>
                 </form>
               </div>

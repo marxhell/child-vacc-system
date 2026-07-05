@@ -1,17 +1,30 @@
+const nodemailer = require('nodemailer');
 const { sendPushNotification } = require('../config/firebase');
 
-// DEPRECATED: SMTP email has been removed.
-// Notifications are now sent exclusively through Firebase.
-// This file is kept for backward compatibility.
-// All notification logic is in services/notificationService.js
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
-// Send notification via Firebase
-const sendNotification = async (recipientToken, title, body, data = {}) => {
+const sendNotification = async (recipientEmail, title, body, data = {}) => {
   try {
-    const result = await sendPushNotification(recipientToken, title, body, data);
+    if (recipientEmail) {
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: recipientEmail,
+        subject: title,
+        text: body,
+      });
+      return { success: true, method: 'email' };
+    }
+
+    const result = await sendPushNotification(data.deviceToken, title, body, data);
     return result;
   } catch (error) {
-    console.error('Firebase notification error:', error);
+    console.error('Notification delivery error:', error);
     return { success: false, error: error.message };
   }
 };

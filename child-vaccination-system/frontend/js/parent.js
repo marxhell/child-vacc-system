@@ -432,17 +432,15 @@ async function showChildDetail(childId, childName) {
           <table class="table table-sm table-bordered">
             <thead class="table-light">
               <tr>
-                <th>Vaccine</th>
-                <th>Date Administered</th>
-                <th>Notes</th>
-              </tr>
+                  <th>Vaccine</th>
+                  <th>Date Administered</th>
+                </tr>
             </thead>
             <tbody>
               ${data.records.map(r => `
                 <tr>
                   <td> ${r.vaccine}</td>
                   <td>${new Date(r.administrationDate).toLocaleDateString()}</td>
-                  <td>${r.notes || '-'}</td>
                 </tr>
               `).join('')}
             </tbody>

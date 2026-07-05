@@ -37,6 +37,7 @@ function toggleSidebar() {
   if (sidebar) {
     sidebar.classList.toggle('open');
     if (overlay) overlay.classList.toggle('show');
+    document.body.classList.toggle('sidebar-open', sidebar.classList.contains('open'));
   }
 }
 
@@ -45,6 +46,7 @@ function closeSidebar() {
   const overlay = document.getElementById('sidebarOverlay');
   if (sidebar) sidebar.classList.remove('open');
   if (overlay) overlay.classList.remove('show');
+  document.body.classList.remove('sidebar-open');
 }
 
 // ===== SIDEBAR INITIALIZATION =====
@@ -308,6 +310,18 @@ function displayPharmacistDashboard(data) {
 // ===== RECORDS OFFICER DASHBOARD =====
 
 function displayRecordsOfficerDashboard(data) {
+  const recentRegistrations = Array.isArray(data.recentRegistrations) ? data.recentRegistrations : [];
+  const recentRegistrationRows = recentRegistrations.length > 0
+    ? recentRegistrations.map(child => `
+        <tr>
+          <td>${child.firstName || ''} ${child.lastName || ''}</td>
+          <td>${child.gender || 'N/A'}</td>
+          <td>${child.birthDate ? new Date(child.birthDate).toLocaleDateString() : 'N/A'}</td>
+          <td>${child.registeredBy ? `${child.registeredBy.firstName || ''} ${child.registeredBy.lastName || ''}` : 'N/A'}</td>
+        </tr>
+      `).join('')
+    : `<tr><td colspan="4" class="text-center text-muted py-3">No recent registrations available.</td></tr>`;
+
   const html = `
     <div class="col-md-3">
       <div class="stat-card">
@@ -316,15 +330,37 @@ function displayRecordsOfficerDashboard(data) {
       </div>
     </div>
     <div class="col-md-3">
-      <div class="stat-card warning-stat">
+      <div class="stat-card">
         <div class="stat-number">${data.upcomingAppointments || 0}</div>
         <div class="stat-label">Upcoming Appointments</div>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="stat-card success-stat">
-        <div class="stat-number">${data.recentRegistrations || 0}</div>
+      <div class="stat-card">
+        <div class="stat-number">${recentRegistrations.length}</div>
         <div class="stat-label">Recent Registrations</div>
+      </div>
+    </div>
+    <div class="col-12 mt-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">Recent Registrations</div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Gender</th>
+                  <th>Birth Date</th>
+                  <th>Registered By</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recentRegistrationRows}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   `;

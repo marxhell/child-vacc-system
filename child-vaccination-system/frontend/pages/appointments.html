@@ -25,7 +25,10 @@
   <!-- Popup Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h6>NAVIGATION</h6>
+      <div class="sidebar-brand">
+        <div class="brand-logo">CV</div>
+        <h6>Child Vaccination</h6>
+      </div>
       <button class="btn-close btn-close-white" onclick="closeSidebar()"></button>
     </div>
     <ul class="nav flex-column" id="sidebarMenu"></ul>
@@ -41,8 +44,10 @@
         <div class="row mb-4">
           <div class="col-md-8"></div>
           <div class="col-md-4 text-end">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAppointmentModal">Schedule Appointment
-            </button>
+            <div class="d-inline-block">
+              <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createAppointmentModal">Schedule Appointment</button>
+              <button class="btn btn-outline-secondary" id="sendRemindersBtn" onclick="handleSendReminders()">Send Reminders</button>
+            </div>
           </div>
         </div>
 
@@ -135,10 +140,7 @@
                 <input type="time" class="form-control" id="appointmentTime" required>
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Remarks</label>
-              <textarea class="form-control" id="appointmentRemarks" rows="3"></textarea>
-            </div>
+            <!-- remarks removed -->
           </form>
         </div>
         <div class="modal-footer">

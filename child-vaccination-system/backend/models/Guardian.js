@@ -9,8 +9,9 @@ const guardianSchema = new mongoose.Schema(
     },
     relationship: {
       type: String,
-      enum: ['Mother', 'Father', 'Guardian', 'Grandparent', 'Other'],
+      enum: ['mother', 'father', 'guardian', 'grandparent', 'other'],
       required: true,
+      lowercase: true,
     },
     nationalId: {
       type: String,

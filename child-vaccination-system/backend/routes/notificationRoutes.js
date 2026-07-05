@@ -16,6 +16,7 @@ router.get('/', getNotifications);
 router.get('/stats', getNotificationStats);
 router.get('/report', authorize(ROLES.ADMINISTRATOR), getNotificationReport);
 router.post('/send-reminder', authorize(ROLES.ADMINISTRATOR), sendManualReminder);
+router.post('/send-appointment-reminders', authorize(ROLES.ADMINISTRATOR), require('../controllers/notificationController').sendAppointmentReminders);
 router.put('/:id/read', markAsRead);
 
 module.exports = router;

@@ -152,3 +152,55 @@ exports.sendManualReminder = async (req, res, next) => {
     sendError(res, error.message, 500, error);
   }
 };
+
+// @desc    Send appointment reminders immediately (admin-triggered)
+// @route   POST /api/notifications/send-appointment-reminders
+// @access  Private/Admin
+exports.sendAppointmentReminders = async (req, res, next) => {
+  try {
+    const { daysInAdvance } = req.body;
+    const days = parseInt(daysInAdvance, 10) || 1;
+
+    const { sendVaccinationReminder } = require('../services/notificationService');
+    const Appointment = require('../models/Appointment');
+    const { APPOINTMENT_STATUS } = require('../config/constants');
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetDate = new Date(today);
+    targetDate.setDate(targetDate.getDate() + days);
+
+    const start = new Date(targetDate);
+    const end = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000);
+
+    const appointments = await Appointment.find({
+      appointmentDate: { $gte: start, $lt: end },
+      status: APPOINTMENT_STATUS.SCHEDULED,
+    }).populate('child guardian');
+
+    let sent = 0;
+    const errors = [];
+
+    for (const appointment of appointments) {
+      try {
+        if (appointment.guardian && appointment.guardian.email) {
+          await sendVaccinationReminder({
+            child: appointment.child,
+            guardian: appointment.guardian,
+            appointment,
+            vaccine: appointment.vaccine,
+            appointmentDate: appointment.appointmentDate,
+            daysBefore: days,
+          });
+          sent += 1;
+        }
+      } catch (err) {
+        errors.push({ appointmentId: appointment._id, error: err.message });
+      }
+    }
+
+    sendSuccess(res, { sent, attempted: appointments.length, errors }, 'Reminders processed', 200);
+  } catch (error) {
+    sendError(res, error.message, 500, error);
+  }
+};

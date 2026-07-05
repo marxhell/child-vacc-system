@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadAllAppointments();
   loadMissedAppointments();
   loadChildrenForAppointment();
+  loadVaccinesForAppointment();
 });
 
 // ===== LOAD TODAY'S APPOINTMENTS =====
@@ -95,7 +96,7 @@ function generateAppointmentTable(appointments, type) {
             <th>Vaccine</th>
             <th>Date & Time</th>
             <th>Status</th>
-            ${type === 'all' ? '<th>Actions</th>' : ''}
+            ${type === 'all' || type === 'today' ? '<th>Actions</th>' : ''}
           </tr>
         </thead>
         <tbody>
@@ -123,6 +124,10 @@ function generateAppointmentTable(appointments, type) {
           <td>
             <button class="btn btn-sm btn-warning" onclick="editAppointment('${apt._id}')">Edit</button>
             <button class="btn btn-sm btn-danger" onclick="deleteAppointmentConfirm('${apt._id}')">Delete</button>
+          </td>
+        ` : type === 'today' ? `
+          <td>
+            ${apt.status === 'scheduled' ? `<button class="btn btn-sm btn-success" onclick="markAppointmentCompleted('${apt._id}')">Mark Done</button>` : ''}
           </td>
         ` : ''}
       </tr>
@@ -152,6 +157,47 @@ async function loadChildrenForAppointment() {
   }
 }
 
+// Populate vaccine dropdown for appointment form
+async function loadVaccinesForAppointment() {
+  try {
+    const vaccineNames = ['BCG', 'OPV', 'Pentavalent', 'Measles', 'Rotavirus', 'PCV', 'Hepatitis B'];
+    const select = document.getElementById('appointmentVaccine');
+    vaccineNames.forEach(vaccine => {
+      const option = document.createElement('option');
+      option.value = vaccine;
+      option.textContent = vaccine;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Error loading vaccines for appointment:', error);
+  }
+}
+
+// Send reminders immediately (presentation/manual trigger)
+async function handleSendReminders() {
+  try {
+    const confirmSend = confirm('Send appointment reminders for 1 day before appointments?');
+    if (!confirmSend) return;
+    // disable button while sending
+    const btn = document.getElementById('sendRemindersBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    // Call API: default daysInAdvance = 1
+    const result = await sendAppointmentReminders();
+    showSuccessMessage(`Reminders processed: sent=${result.data?.sent || 0}, attempted=${result.data?.attempted || 0}`);
+  } catch (error) {
+    console.error('Error sending reminders:', error);
+    showErrorAlert(`Error sending reminders: ${error.message}`);
+  } finally {
+    const btn = document.getElementById('sendRemindersBtn');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Send Reminders';
+    }
+  }
+}
+
 // ===== CREATE APPOINTMENT =====
 
 async function handleCreateAppointment(event) {
@@ -162,7 +208,6 @@ async function handleCreateAppointment(event) {
     const vaccine = document.getElementById('appointmentVaccine').value;
     const appointmentDate = document.getElementById('appointmentDate').value;
     const appointmentTime = document.getElementById('appointmentTime').value;
-    const remarks = document.getElementById('appointmentRemarks').value;
 
     if (!childId || !vaccine || !appointmentDate || !appointmentTime) {
       alert('Please fill in all required fields');
@@ -175,7 +220,6 @@ async function handleCreateAppointment(event) {
       child: childId,
       vaccine,
       appointmentDate: dateTime,
-      remarks,
       status: 'scheduled'
     };
 
@@ -210,7 +254,7 @@ async function editAppointment(appointmentId) {
     const dateTime = apt.appointmentDate.split('T');
     document.getElementById('appointmentDate').value = dateTime[0];
     document.getElementById('appointmentTime').value = dateTime[1].substring(0, 5);
-    document.getElementById('appointmentRemarks').value = apt.remarks || '';
+    // remarks removed
 
     const modal = new bootstrap.Modal(document.getElementById('createAppointmentModal'));
     modal.show();
@@ -231,15 +275,11 @@ async function handleUpdateAppointment(appointmentId) {
     const vaccine = document.getElementById('appointmentVaccine').value;
     const appointmentDate = document.getElementById('appointmentDate').value;
     const appointmentTime = document.getElementById('appointmentTime').value;
-    const remarks = document.getElementById('appointmentRemarks').value;
-
     const dateTime = `${appointmentDate}T${appointmentTime}`;
-
     const data = {
       child: childId,
       vaccine,
       appointmentDate: dateTime,
-      remarks
     };
 
     await updateAppointment(appointmentId, data);
@@ -271,5 +311,19 @@ async function deleteAppointmentConfirm(appointmentId) {
       console.error('Error:', error);
       showErrorAlert(`Error: ${error.message}`);
     }
+  }
+}
+
+// Mark appointment as completed (nurse action)
+async function markAppointmentCompleted(appointmentId) {
+  if (!confirm('Mark this appointment as completed?')) return;
+  try {
+    await updateAppointment(appointmentId, { status: 'completed' });
+    showSuccessMessage(' Appointment marked completed');
+    loadTodayAppointments();
+    loadAllAppointments();
+  } catch (error) {
+    console.error('Error marking appointment completed:', error);
+    showErrorAlert(`Error: ${error.message}`);
   }
 }

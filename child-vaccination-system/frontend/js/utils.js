@@ -270,6 +270,17 @@ async function getAppointmentsReport(page = 1, limit = 10) {
   return await apiCall(`/reports/appointments?page=${page}&limit=${limit}`);
 }
 
+async function downloadReportPdf(path, params = {}) {
+  const token = getToken();
+  const url = new URL(`${API_BASE_URL}${path}`);
+  Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+  const options = { method: 'GET', headers: {} };
+  if (token) options.headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(url, options);
+  if (!response.ok) throw new Error('Failed to download PDF');
+  return await response.blob();
+}
+
 // ===== NOTIFICATIONS APIS =====
 
 async function getNotifications(page = 1, limit = 10) {

@@ -26,10 +26,7 @@ const appointmentSchema = new mongoose.Schema(
       enum: Object.values(APPOINTMENT_STATUS),
       default: APPOINTMENT_STATUS.SCHEDULED,
     },
-    remarks: {
-      type: String,
-      trim: true,
-    },
+    // remarks removed
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

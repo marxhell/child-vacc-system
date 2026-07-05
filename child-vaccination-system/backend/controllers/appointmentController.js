@@ -14,9 +14,11 @@ const {
 // @access  Private
 exports.createAppointment = async (req, res, next) => {
   try {
-    const { childId, vaccine, appointmentDate, remarks, guardianId } = req.body;
+    // Accept either `childId` or `child` from client
+    const { childId, child: childField, vaccine, appointmentDate, guardianId } = req.body;
+    const effectiveChildId = childId || childField;
 
-    const child = await Child.findById(childId).populate('guardians');
+    const child = await Child.findById(effectiveChildId).populate('guardians');
     if (!child) {
       return sendError(res, 'Child not found', 404);
     }
@@ -28,11 +30,10 @@ exports.createAppointment = async (req, res, next) => {
     }
 
     const appointment = new Appointment({
-      child: childId,
+      child: effectiveChildId,
       guardian: guardianRef,
       vaccine,
       appointmentDate: new Date(appointmentDate),
-      remarks,
       createdBy: req.user._id,
     });
 
@@ -103,7 +104,7 @@ exports.getAppointmentById = async (req, res, next) => {
 // @access  Private
 exports.updateAppointment = async (req, res, next) => {
   try {
-    const { appointmentDate, status, remarks } = req.body;
+    const { appointmentDate, status } = req.body;
 
     let appointment = await Appointment.findById(req.params.id);
     if (!appointment) {
@@ -117,7 +118,7 @@ exports.updateAppointment = async (req, res, next) => {
 
     if (appointmentDate) appointment.appointmentDate = new Date(appointmentDate);
     if (status) appointment.status = status;
-    if (remarks) appointment.remarks = remarks;
+    // remarks removed
 
     if (status === APPOINTMENT_STATUS.COMPLETED) {
       appointment.completionDate = new Date();

@@ -128,6 +128,47 @@ async function getAdminDashboard() {
   return await apiCall('/dashboard/admin');
 }
 
+// Reports APIs
+async function getMonthlyImmunizationReport(startDate = '', endDate = '') {
+  const url = `/reports/monthly-immunization${startDate ? `?startDate=${startDate}&endDate=${endDate}` : ''}`;
+  return await apiCall(url);
+}
+
+async function getVaccinationCoverageReport() {
+  return await apiCall('/reports/vaccination-coverage');
+}
+
+async function getOverdueVaccinationsReport(page = 1, limit = 10) {
+  return await apiCall(`/reports/overdue-vaccinations?page=${page}&limit=${limit}`);
+}
+
+async function getVaccineStockReport() {
+  return await apiCall('/reports/vaccine-stock');
+}
+
+async function getVaccineUsageReport(startDate = '', endDate = '') {
+  const url = `/reports/vaccine-usage${startDate ? `?startDate=${startDate}&endDate=${endDate}` : ''}`;
+  return await apiCall(url);
+}
+
+async function getExpiredVaccinesReport() {
+  return await apiCall('/reports/expired-vaccines');
+}
+
+async function getAppointmentsReport(page = 1, limit = 10) {
+  return await apiCall(`/reports/appointments?page=${page}&limit=${limit}`);
+}
+
+async function downloadReportPdf(path, params = {}) {
+  const url = new URL(`${API_BASE_URL}${path}`);
+  Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+  const options = { method: 'GET', headers: {} };
+  if (token) options.headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(url, options);
+  if (!response.ok) throw new Error('Failed to download PDF');
+  return await response.blob();
+}
+
 async function getNurseDashboard() {
   return await apiCall('/dashboard/nurse');
 }
@@ -151,6 +192,18 @@ async function getVaccinationCoverageReport() {
 
 async function getOverdueVaccinationsReport() {
   return await apiCall('/reports/overdue-vaccinations');
+  // Download PDF helpers
+async function downloadReportPdf(path, params = {}) {
+  const token = localStorage.getItem('token');
+  const url = new URL(`${API_BASE_URL}${path}`);
+  Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
+  const options = { method: 'GET', headers: {} };
+  if (token) options.headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(url, options);
+  if (!response.ok) throw new Error('Failed to download PDF');
+  const blob = await response.blob();
+  return blob;
+}
 }
 
 // Notifications APIs
