@@ -25,13 +25,27 @@ const app = express();
 connectDB();
 
 // Middleware
-  app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://127.0.0.1:5500',
-        'http://localhost:5500'
-    ],
-    credentials: true
+// CORS Configuration - Production Ready
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:5500',
+  'http://localhost:5500',
+  'http://localhost:3001'
+];
+
+// Add production URLs if configured
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+if (process.env.PRODUCTION_URL) {
+  allowedOrigins.push(process.env.PRODUCTION_URL);
+}
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());

@@ -1,0 +1,21 @@
+# Render deployment configuration for Child Vaccination System backend
+
+# This file helps with deployment settings on Render.com
+
+# Environment variables to set in Render dashboard:
+# - MONGODB_URI: Your MongoDB Atlas connection string
+# - MONGO_DB_NAME: Database name (default: child-vaccination-system)
+# - NODE_ENV: Set to 'production'
+# - PORT: 5000 (or as needed)
+# - JWT_SECRET: Your secure JWT secret
+# - EMAIL_USER: Gmail address for sending notifications
+# - EMAIL_PASS: Gmail app-specific password
+# - EMAIL_FROM: Sender email address
+# - FRONTEND_URL: http://localhost:3000 (for development)
+# - PRODUCTION_URL: Your Netlify frontend URL (e.g., https://your-app.netlify.app)
+
+# Start command (Render will run this):
+# npm start
+
+# Note: Make sure .env file is NOT committed to repository
+# All secrets should be set via Render environment variables
