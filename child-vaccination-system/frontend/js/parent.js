@@ -434,7 +434,6 @@ async function showChildDetail(childId, childName) {
               <tr>
                 <th>Vaccine</th>
                 <th>Date Administered</th>
-                <th>Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -442,7 +441,6 @@ async function showChildDetail(childId, childName) {
                 <tr>
                   <td> ${r.vaccine}</td>
                   <td>${new Date(r.administrationDate).toLocaleDateString()}</td>
-                  <td>${r.notes || '-'}</td>
                 </tr>
               `).join('')}
             </tbody>

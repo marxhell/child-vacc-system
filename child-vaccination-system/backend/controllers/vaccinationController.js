@@ -99,7 +99,7 @@ exports.getUpcomingVaccinations = async (req, res, next) => {
 // @access  Private/Nurse
 exports.recordVaccination = async (req, res, next) => {
   try {
-    const { childId, vaccine, doseNumber, notes, adverseEffects, vaccineBatchId } = req.body;
+    const { childId, vaccine, doseNumber, adverseEffects, vaccineBatchId } = req.body;
 
     const child = await Child.findById(childId);
     if (!child) {
@@ -112,7 +112,6 @@ exports.recordVaccination = async (req, res, next) => {
       vaccine,
       doseNumber,
       administeredBy: req.user._id,
-      notes,
       adverseEffects,
       vaccineBatch: vaccineBatchId,
     });

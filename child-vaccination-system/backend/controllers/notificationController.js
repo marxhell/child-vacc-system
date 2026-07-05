@@ -1,4 +1,5 @@
 const Notification = require('../models/Notification');
+const Appointment = require('../models/Appointment');
 const { sendSuccess, sendError, sendPaginated } = require('../utils/responseHandler');
 const { NOTIFICATION_TYPES } = require('../config/constants');
 
@@ -123,7 +124,6 @@ exports.sendManualReminder = async (req, res, next) => {
   try {
     const { appointmentId, daysBefore } = req.body;
     const { sendVaccinationReminder } = require('../services/notificationService');
-    const Appointment = require('../models/Appointment');
 
     const appointment = await Appointment.findById(appointmentId).populate('child guardian');
     if (!appointment) {
@@ -148,6 +148,48 @@ exports.sendManualReminder = async (req, res, next) => {
     } else {
       sendError(res, 'Failed to send reminder', 500, result.error);
     }
+  } catch (error) {
+    sendError(res, error.message, 500, error);
+  }
+};
+
+// @desc    Send reminder notifications for all upcoming appointments
+// @route   POST /api/notifications/send-bulk-reminders
+// @access  Private/Admin
+exports.sendBulkReminders = async (req, res, next) => {
+  try {
+    const { sendVaccinationReminder } = require('../services/notificationService');
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+
+    const appointments = await Appointment.find({
+      status: 'scheduled',
+      appointmentDate: { $gte: today, $lte: nextWeek },
+    }).populate('child guardian');
+
+    let sentCount = 0;
+
+    for (const appointment of appointments) {
+      if (!appointment.guardian || !appointment.guardian.email || !appointment.child) {
+        continue;
+      }
+
+      const result = await sendVaccinationReminder({
+        child: appointment.child,
+        guardian: appointment.guardian,
+        appointment,
+        vaccine: appointment.vaccine,
+        appointmentDate: appointment.appointmentDate,
+        daysBefore: 1,
+      });
+
+      if (result.success) {
+        sentCount += 1;
+      }
+    }
+
+    sendSuccess(res, { sent: sentCount, total: appointments.length }, 'Bulk reminder emails processed', 200);
   } catch (error) {
     sendError(res, error.message, 500, error);
   }

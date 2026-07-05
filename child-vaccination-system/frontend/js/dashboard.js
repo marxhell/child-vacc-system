@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize sidebar
   initializeSidebar(user.role);
 
+  const sendReminderBtn = document.getElementById('sendReminderBtn');
+  if (sendReminderBtn) {
+    sendReminderBtn.style.display = user.role === 'administrator' ? 'inline-block' : 'none';
+  }
+
   // Only load dashboard if on dashboard page
   if (document.getElementById('dashboardStats')) {
     loadDashboard(user.role);
@@ -105,6 +110,30 @@ async function handleLogout() {
       removeAuth();
       window.location.href = 'login.html';
     }
+  }
+}
+
+// ===== SEND REMINDER EMAILS =====
+
+async function sendReminderEmailsFromAdmin() {
+  const button = document.getElementById('sendReminderBtn');
+  if (!button) return;
+
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Sending...';
+
+  try {
+    const response = await sendBulkReminderEmails();
+    const sentCount = response.data?.sent || 0;
+    const total = response.data?.total || 0;
+    alert(`Reminder emails processed for ${sentCount} of ${total} upcoming appointment(s).`);
+  } catch (error) {
+    console.error('Reminder email error:', error);
+    alert(`Unable to send reminder emails: ${error.message}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
   }
 }
 
@@ -308,6 +337,20 @@ function displayPharmacistDashboard(data) {
 // ===== RECORDS OFFICER DASHBOARD =====
 
 function displayRecordsOfficerDashboard(data) {
+  const recentRegistrations = Array.isArray(data.recentRegistrations) ? data.recentRegistrations : [];
+  const recentList = recentRegistrations.length > 0
+    ? `
+      <div class="card mt-3">
+        <div class="card-header">Recent Registrations</div>
+        <div class="card-body">
+          <ul class="list-unstyled mb-0">
+            ${recentRegistrations.map(child => `<li>${child.firstName || 'Unknown'} ${child.lastName || ''} — ${child.patientId || 'N/A'} • ${new Date(child.createdAt).toLocaleDateString()}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `
+    : '<div class="alert alert-info mt-3">No recent registrations found.</div>';
+
   const html = `
     <div class="col-md-3">
       <div class="stat-card">
@@ -323,9 +366,12 @@ function displayRecordsOfficerDashboard(data) {
     </div>
     <div class="col-md-3">
       <div class="stat-card success-stat">
-        <div class="stat-number">${data.recentRegistrations || 0}</div>
+        <div class="stat-number">${recentRegistrations.length}</div>
         <div class="stat-label">Recent Registrations</div>
       </div>
+    </div>
+    <div class="col-12">
+      ${recentList}
     </div>
   `;
   document.getElementById('dashboardStats').innerHTML = html;

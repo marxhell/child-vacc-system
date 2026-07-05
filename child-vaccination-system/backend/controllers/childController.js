@@ -33,7 +33,7 @@ exports.registerChild = async (req, res, next) => {
       if (!guardian) {
         guardian = new Guardian({
           name: guardianName,
-          relationship: guardianRelationship || 'Guardian',
+          relationship: Guardian.normalizeRelationship(guardianRelationship || 'Guardian'),
           phoneNumber: guardianPhone || '',
           email: guardianEmail ? guardianEmail.toLowerCase() : '',
           nationalId: guardianNationalId || '',
@@ -42,7 +42,7 @@ exports.registerChild = async (req, res, next) => {
       } else {
         // Update existing guardian info
         guardian.name = guardianName || guardian.name;
-        guardian.relationship = guardianRelationship || guardian.relationship;
+        guardian.relationship = Guardian.normalizeRelationship(guardianRelationship || guardian.relationship);
         guardian.phoneNumber = guardianPhone || guardian.phoneNumber;
         guardian.email = guardianEmail ? guardianEmail.toLowerCase() : guardian.email;
         if (guardianNationalId) guardian.nationalId = guardianNationalId;

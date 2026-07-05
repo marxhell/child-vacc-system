@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadAllAppointments();
   loadMissedAppointments();
   loadChildrenForAppointment();
+  loadVaccinesForAppointment();
 });
 
 // ===== LOAD TODAY'S APPOINTMENTS =====
@@ -95,13 +96,17 @@ function generateAppointmentTable(appointments, type) {
             <th>Vaccine</th>
             <th>Date & Time</th>
             <th>Status</th>
-            ${type === 'all' ? '<th>Actions</th>' : ''}
+            ${type === 'all' || type === 'today' ? '<th>Actions</th>' : ''}
           </tr>
         </thead>
         <tbody>
   `;
 
   appointments.forEach(apt => {
+    const currentUser = getCurrentUser();
+    const canManageStatus = currentUser && ['administrator', 'nurse'].includes(currentUser.role);
+    const showStatusActions = canManageStatus && ['scheduled', 'rescheduled'].includes(apt.status);
+
     const statusBadge = `
       <span class="badge ${
         apt.status === 'completed' ? 'bg-success' :
@@ -112,6 +117,17 @@ function generateAppointmentTable(appointments, type) {
       }">${apt.status}</span>
     `;
 
+    const actionCell = (type === 'all' || type === 'today') ? `
+      <td>
+        ${showStatusActions ? `
+          <button class="btn btn-sm btn-success me-1" onclick="markAppointmentStatus('${apt._id}', 'completed')">✓ Complete</button>
+          <button class="btn btn-sm btn-danger me-1" onclick="markAppointmentStatus('${apt._id}', 'missed')">✕ Miss</button>
+        ` : ''}
+        <button class="btn btn-sm btn-warning me-1" onclick="editAppointment('${apt._id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteAppointmentConfirm('${apt._id}')">Delete</button>
+      </td>
+    ` : '';
+
     html += `
       <tr>
         <td><strong>${apt.child?.firstName} ${apt.child?.lastName}</strong></td>
@@ -119,18 +135,31 @@ function generateAppointmentTable(appointments, type) {
         <td>${apt.vaccine}</td>
         <td>${formatDateTime(apt.appointmentDate)}</td>
         <td>${statusBadge}</td>
-        ${type === 'all' ? `
-          <td>
-            <button class="btn btn-sm btn-warning" onclick="editAppointment('${apt._id}')">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteAppointmentConfirm('${apt._id}')">Delete</button>
-          </td>
-        ` : ''}
+        ${actionCell}
       </tr>
     `;
   });
 
   html += '</tbody></table></div>';
   return html;
+}
+
+// ===== UPDATE APPOINTMENT STATUS =====
+
+async function markAppointmentStatus(appointmentId, status) {
+  const actionLabel = status === 'completed' ? 'completed' : 'marked as missed';
+  if (!confirm(`Mark this appointment as ${actionLabel}?`)) return;
+
+  try {
+    await updateAppointment(appointmentId, { status });
+    alert(`Appointment ${status === 'completed' ? 'completed' : 'marked missed'} successfully.`);
+    loadTodayAppointments();
+    loadAllAppointments();
+    loadMissedAppointments();
+  } catch (error) {
+    console.error('Error updating appointment status:', error);
+    alert(`Error: ${error.message}`);
+  }
 }
 
 // ===== LOAD CHILDREN FOR APPOINTMENT =====
@@ -152,6 +181,30 @@ async function loadChildrenForAppointment() {
   }
 }
 
+// ===== LOAD VACCINES FOR APPOINTMENT =====
+
+async function loadVaccinesForAppointment() {
+  try {
+    const response = await getInventory(1, 100);
+    const vaccines = response.data || [];
+    const select = document.getElementById('appointmentVaccine');
+
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Select vaccine...</option>';
+
+    const uniqueVaccines = [...new Set(vaccines.map(vaccine => vaccine.name).filter(Boolean))];
+    uniqueVaccines.forEach(vaccine => {
+      const option = document.createElement('option');
+      option.value = vaccine;
+      option.textContent = vaccine;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Error loading vaccines:', error);
+  }
+}
+
 // ===== CREATE APPOINTMENT =====
 
 async function handleCreateAppointment(event) {
@@ -162,7 +215,6 @@ async function handleCreateAppointment(event) {
     const vaccine = document.getElementById('appointmentVaccine').value;
     const appointmentDate = document.getElementById('appointmentDate').value;
     const appointmentTime = document.getElementById('appointmentTime').value;
-    const remarks = document.getElementById('appointmentRemarks').value;
 
     if (!childId || !vaccine || !appointmentDate || !appointmentTime) {
       alert('Please fill in all required fields');
@@ -172,10 +224,9 @@ async function handleCreateAppointment(event) {
     const dateTime = `${appointmentDate}T${appointmentTime}`;
 
     const data = {
-      child: childId,
+      childId,
       vaccine,
       appointmentDate: dateTime,
-      remarks,
       status: 'scheduled'
     };
 
@@ -210,7 +261,6 @@ async function editAppointment(appointmentId) {
     const dateTime = apt.appointmentDate.split('T');
     document.getElementById('appointmentDate').value = dateTime[0];
     document.getElementById('appointmentTime').value = dateTime[1].substring(0, 5);
-    document.getElementById('appointmentRemarks').value = apt.remarks || '';
 
     const modal = new bootstrap.Modal(document.getElementById('createAppointmentModal'));
     modal.show();
@@ -231,15 +281,13 @@ async function handleUpdateAppointment(appointmentId) {
     const vaccine = document.getElementById('appointmentVaccine').value;
     const appointmentDate = document.getElementById('appointmentDate').value;
     const appointmentTime = document.getElementById('appointmentTime').value;
-    const remarks = document.getElementById('appointmentRemarks').value;
 
     const dateTime = `${appointmentDate}T${appointmentTime}`;
 
     const data = {
       child: childId,
       vaccine,
-      appointmentDate: dateTime,
-      remarks
+      appointmentDate: dateTime
     };
 
     await updateAppointment(appointmentId, data);

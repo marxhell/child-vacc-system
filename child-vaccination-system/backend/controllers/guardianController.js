@@ -17,7 +17,7 @@ exports.createGuardian = async (req, res, next) => {
 
     guardian = new Guardian({
       name,
-      relationship,
+      relationship: Guardian.normalizeRelationship(relationship),
       nationalId,
       phoneNumber,
       email,
@@ -106,7 +106,7 @@ exports.updateGuardian = async (req, res, next) => {
     };
 
     if (name) guardian.name = name;
-    if (relationship) guardian.relationship = relationship;
+    if (relationship) guardian.relationship = Guardian.normalizeRelationship(relationship);
     if (phoneNumber) guardian.phoneNumber = phoneNumber;
     if (email) guardian.email = email;
     if (physicalAddress) guardian.physicalAddress = physicalAddress;

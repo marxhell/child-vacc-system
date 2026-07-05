@@ -1,4 +1,5 @@
 const { body, param, query, validationResult } = require('express-validator');
+const Guardian = require('../models/Guardian');
 const { sendError } = require('../utils/responseHandler');
 
 // Validation middleware
@@ -39,7 +40,11 @@ const validateChildRegistration = [
 // Guardian validation
 const validateGuardianCreation = [
   body('name').trim().notEmpty().withMessage('Guardian name is required'),
-  body('relationship').isIn(['Mother', 'Father', 'Guardian', 'Grandparent', 'Other']).withMessage('Invalid relationship'),
+  body('relationship')
+    .trim()
+    .customSanitizer((value) => Guardian.normalizeRelationship(value))
+    .isIn(['Mother', 'Father', 'Guardian', 'Grandparent', 'Other'])
+    .withMessage('Invalid relationship'),
   body('nationalId').trim().notEmpty().withMessage('National ID is required'),
   body('phoneNumber').isMobilePhone().withMessage('Invalid phone number'),
   body('email').isEmail().withMessage('Valid email is required for appointment reminders'),
@@ -59,7 +64,13 @@ const validateVaccineCreation = [
 
 // Appointment validation
 const validateAppointmentCreation = [
-  body('child').isMongoId().withMessage('Invalid child ID'),
+  body(['child', 'childId']).custom((value, { req }) => {
+    const childValue = req.body.child || req.body.childId;
+    if (!childValue) {
+      throw new Error('Child is required');
+    }
+    return /^[a-fA-F0-9]{24}$/.test(childValue);
+  }).withMessage('Invalid child ID'),
   body('vaccine').notEmpty().withMessage('Vaccine is required'),
   body('appointmentDate').isISO8601().withMessage('Invalid appointment date'),
   validate,

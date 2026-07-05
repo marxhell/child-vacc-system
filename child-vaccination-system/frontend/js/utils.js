@@ -49,7 +49,15 @@ async function apiCall(endpoint, method = 'GET', data = null) {
       throw new Error('Session expired. Please login again.');
     }
 
-    const result = await response.json();
+    let result;
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      result = await response.json();
+    } else {
+      const text = await response.text();
+      result = text ? { message: text } : {};
+    }
 
     if (!response.ok) {
       const errorMsg = result.message || result.error || `Error: ${response.status}`;
@@ -281,11 +289,15 @@ async function getNotificationStats() {
 }
 
 async function sendAppointmentReminders() {
-  return await apiCall('/notifications/send-appointment-reminders', 'POST');
+  return await apiCall('/notifications/send-bulk-reminders', 'POST');
+}
+
+async function sendBulkReminderEmails() {
+  return await apiCall('/notifications/send-bulk-reminders', 'POST');
 }
 
 async function sendMissedVaccinationNotifications() {
-  return await apiCall('/notifications/send-missed-vaccination-notifications', 'POST');
+  return await apiCall('/notifications/send-bulk-reminders', 'POST');
 }
 
 async function markNotificationAsRead(notificationId) {

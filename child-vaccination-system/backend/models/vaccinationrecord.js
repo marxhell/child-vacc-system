@@ -35,10 +35,6 @@ const vaccinationRecordSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Vaccine',
     },
-    notes: {
-      type: String,
-      trim: true,
-    },
     adverseEffects: {
       type: String,
       trim: true,

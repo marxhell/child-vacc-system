@@ -6,6 +6,7 @@ const {
   getNotificationReport,
   markAsRead,
   sendManualReminder,
+  sendBulkReminders,
 } = require('../controllers/notificationController');
 const { verifyToken, authorize } = require('../middleware/auth');
 const { ROLES } = require('../config/constants');
@@ -16,6 +17,9 @@ router.get('/', getNotifications);
 router.get('/stats', getNotificationStats);
 router.get('/report', authorize(ROLES.ADMINISTRATOR), getNotificationReport);
 router.post('/send-reminder', authorize(ROLES.ADMINISTRATOR), sendManualReminder);
+router.post('/send-bulk-reminders', authorize(ROLES.ADMINISTRATOR), sendBulkReminders);
+router.post('/send-appointment-reminders', authorize(ROLES.ADMINISTRATOR), sendBulkReminders);
+router.post('/send-missed-vaccination-notifications', authorize(ROLES.ADMINISTRATOR), sendBulkReminders);
 router.put('/:id/read', markAsRead);
 
 module.exports = router;

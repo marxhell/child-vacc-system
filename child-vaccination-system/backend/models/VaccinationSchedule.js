@@ -31,10 +31,6 @@ const vaccinationScheduleSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    notes: {
-      type: String,
-      trim: true,
-    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

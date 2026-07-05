@@ -9,12 +9,27 @@ const {
   sendMissedAppointmentNotification,
 } = require('../services/notificationService');
 
+const markOverdueAppointmentsAsMissed = async () => {
+  try {
+    const now = new Date();
+    await Appointment.updateMany(
+      {
+        status: { $in: [APPOINTMENT_STATUS.SCHEDULED, APPOINTMENT_STATUS.RESCHEDULED] },
+        appointmentDate: { $lt: now },
+      },
+      { $set: { status: APPOINTMENT_STATUS.MISSED } }
+    );
+  } catch (error) {
+    console.error('Error marking overdue appointments as missed:', error.message);
+  }
+};
+
 // @desc    Create appointment
 // @route   POST /api/appointments
 // @access  Private
 exports.createAppointment = async (req, res, next) => {
   try {
-    const { childId, vaccine, appointmentDate, remarks, guardianId } = req.body;
+    const { childId, vaccine, appointmentDate, guardianId } = req.body;
 
     const child = await Child.findById(childId).populate('guardians');
     if (!child) {
@@ -32,7 +47,6 @@ exports.createAppointment = async (req, res, next) => {
       guardian: guardianRef,
       vaccine,
       appointmentDate: new Date(appointmentDate),
-      remarks,
       createdBy: req.user._id,
     });
 
@@ -67,6 +81,8 @@ exports.getAppointments = async (req, res, next) => {
     const status = req.query.status || null;
 
     const query = status ? { status } : {};
+
+    await markOverdueAppointmentsAsMissed();
 
     const appointments = await Appointment.find(query)
       .populate('child guardian createdBy completedBy')
@@ -103,7 +119,7 @@ exports.getAppointmentById = async (req, res, next) => {
 // @access  Private
 exports.updateAppointment = async (req, res, next) => {
   try {
-    const { appointmentDate, status, remarks } = req.body;
+    const { appointmentDate, status } = req.body;
 
     let appointment = await Appointment.findById(req.params.id);
     if (!appointment) {
@@ -117,7 +133,6 @@ exports.updateAppointment = async (req, res, next) => {
 
     if (appointmentDate) appointment.appointmentDate = new Date(appointmentDate);
     if (status) appointment.status = status;
-    if (remarks) appointment.remarks = remarks;
 
     if (status === APPOINTMENT_STATUS.COMPLETED) {
       appointment.completionDate = new Date();
@@ -185,6 +200,8 @@ exports.getTodayAppointments = async (req, res, next) => {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    await markOverdueAppointmentsAsMissed();
 
     const appointments = await Appointment.find({
       appointmentDate: { $gte: today, $lt: tomorrow },

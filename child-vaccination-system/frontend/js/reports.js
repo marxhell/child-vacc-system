@@ -299,55 +299,72 @@ async function loadAppointmentReport() {
   try {
     showLoadingSpinner('appointmentReport');
     const response = await getAppointmentsReport(1, 50);
-    const summary = response.data?.summary || [];
-    const detailedReport = response.data?.detailedReport || [];
+    const summary = Array.isArray(response?.data?.summary) ? response.data.summary : [];
+    const detailedReport = Array.isArray(response?.data?.detailedReport) ? response.data.detailedReport : [];
 
-    if (summary.length === 0) {
+    if (summary.length === 0 && detailedReport.length === 0) {
       document.getElementById('appointmentReport').innerHTML = '<div class="alert alert-info">No appointment data</div>';
       return;
     }
 
+    const totalAppointments = detailedReport.length || summary.reduce((acc, item) => acc + (item.count || 0), 0);
+    const statusLabels = {
+      completed: 'Completed',
+      scheduled: 'Scheduled',
+      missed: 'Missed',
+      cancelled: 'Cancelled',
+      rescheduled: 'Rescheduled',
+    };
+
     let html = `
-      <h6 class="text-muted mb-3">Appointments Summary by Status</h6>
-      <div class="table-responsive mb-4">
-        <table class="table table-hover">
-          <thead class="table-light">
-            <tr>
-              <th>Status</th>
-              <th>Count</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0">Appointment Report</h5>
+              <small class="opacity-75">Summary of all appointments and current status</small>
+            </div>
+            <span class="badge bg-light text-primary">${totalAppointments} total</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3 mb-4">
     `;
 
     summary.forEach(item => {
+      const statusName = statusLabels[item._id] || (item._id || 'Unknown').toString().replace(/\b\w/g, c => c.toUpperCase());
+      const badgeClass = item._id === 'missed' ? 'bg-danger' : item._id === 'cancelled' ? 'bg-secondary' : item._id === 'completed' ? 'bg-success' : 'bg-info';
       html += `
-        <tr>
-          <td><strong>${(item._id || 'unknown').charAt(0).toUpperCase() + (item._id || 'unknown').slice(1)}</strong></td>
-          <td><span class="badge bg-primary">${item.count || 0}</span></td>
-        </tr>
+            <div class="col-md-3">
+              <div class="border rounded p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <strong>${statusName}</strong>
+                  <span class="badge ${badgeClass}">${item.count || 0}</span>
+                </div>
+                <small class="text-muted">${item.count ? 'Records in this status' : 'No records found'}</small>
+              </div>
+            </div>
       `;
     });
 
-    html += '</tbody></table></div>';
+    html += `
+          </div>
 
-    // Show detailed report if available
+          <h6 class="text-primary mb-3">Detailed Appointments</h6>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Child</th>
+                  <th>Vaccine</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+    `;
+
     if (detailedReport.length > 0) {
-      html += `
-        <h6 class="text-muted mb-3">Detailed Appointments</h6>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead class="table-light">
-              <tr>
-                <th>Child</th>
-                <th>Vaccine</th>
-                <th>Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
       detailedReport.forEach(apt => {
         const statusBadge = apt.status === 'completed' ? 'bg-success' : 
                            apt.status === 'missed' ? 'bg-danger' : 
@@ -357,18 +374,180 @@ async function loadAppointmentReport() {
             <td><strong>${apt.child?.firstName || ''} ${apt.child?.lastName || 'N/A'}</strong></td>
             <td>${apt.vaccine || 'N/A'}</td>
             <td>${formatDate(apt.appointmentDate)}</td>
-            <td><span class="badge ${statusBadge}">${apt.status}</span></td>
+            <td><span class="badge ${statusBadge}">${(apt.status || 'unknown').toString().replace(/\b\w/g, c => c.toUpperCase())}</span></td>
           </tr>
         `;
       });
-
-      html += '</tbody></table></div>';
+    } else {
+      html += `
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">No detailed appointment data available.</td>
+        </tr>
+      `;
     }
+
+    html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
 
     document.getElementById('appointmentReport').innerHTML = html;
   } catch (error) {
     console.error('Error:', error);
     showErrorMessage('appointmentReport', `Error: ${error.message}`);
   }
+}
+
+function exportCurrentReportAsPdf() {
+  const activePane = document.querySelector('.tab-pane.active');
+  if (!activePane) {
+    alert('No report is currently selected.');
+    return;
+  }
+
+  const reportTitle = activePane.querySelector('.card-header h5')?.textContent || 'Report';
+  const reportBody = activePane.querySelector('.card-body');
+  if (!reportBody) {
+    alert('No report content is available to export.');
+    return;
+  }
+
+  if (!window.jspdf?.jsPDF) {
+    alert('PDF export is unavailable right now.');
+    return;
+  }
+
+  const doc = new window.jspdf.jsPDF();
+  
+  // Header
+  doc.setFontSize(18);
+  doc.setFont(undefined, 'bold');
+  doc.text(reportTitle, 14, 20);
+  
+  // Subtitle
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(100);
+  doc.text(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, 14, 28);
+  doc.setTextColor(0);
+  
+  let y = 38;
+  
+  // Extract tables if they exist
+  const tables = reportBody.querySelectorAll('table');
+  const statusCards = reportBody.querySelectorAll('.border.rounded');
+  
+  // If this is an appointment report with status cards
+  if (statusCards.length > 0 && reportTitle.includes('Appointment')) {
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(11);
+    doc.text('Summary by Status', 14, y);
+    y += 8;
+    
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    statusCards.forEach(card => {
+      const statusName = card.querySelector('strong')?.textContent || '';
+      const count = card.querySelector('.badge')?.textContent || '0';
+      
+      if (statusName) {
+        doc.text(`${statusName}: ${count} records`, 18, y);
+        y += 6;
+      }
+    });
+    
+    y += 5;
+  }
+  
+  // Add tables with better formatting
+  tables.forEach((table, tableIndex) => {
+    if (y > 250) {
+      doc.addPage();
+      y = 20;
+    }
+    
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const headers = Array.from(table.querySelectorAll('thead th')).map(h => h.textContent.trim());
+    
+    if (rows.length > 0) {
+      // Add table title (if available)
+      if (tableIndex > 0 || statusCards.length > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(11);
+        doc.text('Detailed Records', 14, y);
+        y += 8;
+      }
+      
+      // Create table data
+      const tableData = [];
+      tableData.push(headers);
+      
+      rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+        tableData.push(cells);
+      });
+      
+      // Add table to PDF with auto layout
+      if (window.autoTable) {
+        window.autoTable(doc, {
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          startY: y,
+          margin: 14,
+          styles: {
+            fontSize: 9,
+            cellPadding: 3,
+            overflow: 'linebreak',
+            halign: 'left',
+          },
+          headStyles: {
+            fillColor: [37, 99, 235],
+            textColor: 255,
+            fontStyle: 'bold',
+          },
+          alternateRowStyles: {
+            fillColor: [248, 251, 255],
+          },
+          didDrawPage: function(data) {
+            y = data.cursor.y;
+          },
+        });
+        
+        y = doc.lastAutoTable.finalY + 5;
+      } else {
+        // Fallback: simple text representation
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(9);
+        doc.text(headers.join(' | '), 14, y);
+        y += 6;
+        
+        doc.setFont(undefined, 'normal');
+        rows.forEach(row => {
+          if (y > 280) {
+            doc.addPage();
+            y = 20;
+          }
+          const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+          doc.text(cells.join(' | '), 14, y);
+          y += 5;
+        });
+      }
+    }
+  });
+  
+  // Footer
+  const pageCount = doc.internal.pages.length;
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 30, doc.internal.pageSize.getHeight() - 10);
+  }
+  
+  const fileName = `${reportTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`;
+  doc.save(fileName);
 }
 

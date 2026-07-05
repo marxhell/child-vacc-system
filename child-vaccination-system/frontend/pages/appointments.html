@@ -40,9 +40,9 @@
         <!-- Toolbar -->
         <div class="row mb-4">
           <div class="col-md-8"></div>
-          <div class="col-md-4 text-end">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAppointmentModal">Schedule Appointment
-            </button>
+          <div class="col-md-4 text-end d-flex justify-content-end gap-2">
+            <button class="btn btn-outline-primary" id="sendReminderBtn" onclick="sendReminderEmailsFromAdmin()">Send Reminder Emails</button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAppointmentModal">Schedule Appointment</button>
           </div>
         </div>
 
@@ -134,10 +134,6 @@
                 <label class="form-label">Appointment Time *</label>
                 <input type="time" class="form-control" id="appointmentTime" required>
               </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Remarks</label>
-              <textarea class="form-control" id="appointmentRemarks" rows="3"></textarea>
             </div>
           </form>
         </div>
