@@ -13,8 +13,23 @@
 
 # Redirect HTML files from root to pages directory (for accessing dashboard.html at /)
 [[redirects]]
+  from = "/"
+  to = "/pages/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard.html"
+  to = "/pages/dashboard.html"
+  status = 200
+
+[[redirects]]
   from = "/dashboard"
   to = "/pages/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/login.html"
+  to = "/pages/login.html"
   status = 200
 
 [[redirects]]
@@ -23,8 +38,18 @@
   status = 200
 
 [[redirects]]
+  from = "/parent-login.html"
+  to = "/pages/parent-login.html"
+  status = 200
+
+[[redirects]]
   from = "/parent-login"
   to = "/pages/parent-login.html"
+  status = 200
+
+[[redirects]]
+  from = "/parent-dashboard.html"
+  to = "/pages/parent-dashboard.html"
   status = 200
 
 [[redirects]]
