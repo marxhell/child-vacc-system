@@ -135,7 +135,9 @@
   </div>
 
   <script>
-    const API_BASE_URL = window.API_BASE_URL || 'http://localhost:5000/api';
+    // Production-aware API URL configuration
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    const API_BASE_URL = isProduction ? 'https://child-vacc-system.onrender.com/api' : 'http://localhost:5000/api';
 
     async function handleParentLogin(event) {
       event.preventDefault();

@@ -13,14 +13,8 @@ let API_BASE_URL = 'http://localhost:5000/api'; // Default to local development
 
 // Production URL - set based on deployment
 if (isProduction) {
-  // If deployed on Netlify, use environment variable or detect from hostname
-  if (window.location.hostname.includes('netlify.app')) {
-    // For Netlify deployments, use the backend Render URL
-    API_BASE_URL = window.API_BASE_URL || 'https://your-render-backend.onrender.com/api';
-  } else {
-    // For other production deployments
-    API_BASE_URL = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:5000/api`;
-  }
+  // For production deployments, use Render backend
+  API_BASE_URL = 'https://child-vacc-system.onrender.com/api';
 }
 
 // Development override via global window variable (can be set in HTML or via external config)
