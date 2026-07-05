@@ -3,7 +3,7 @@
 # Build settings
 [build]
   command = "echo 'Static site - no build required'"
-  publish = "child-vaccination-system/frontend"
+  publish = "child-vaccination-system/frontend/pages"
   # No build step needed for static HTML/CSS/JS site
 
 # Environment variables (set these in Netlify UI or uncomment here)
@@ -11,50 +11,10 @@
   # Point to your Render backend
   # API_BASE_URL = "https://your-render-backend.onrender.com/api"
 
-# Redirect HTML files from root to pages directory (for accessing dashboard.html at /)
+# Redirect all unmatched routes to dashboard for SPA-like routing
 [[redirects]]
-  from = "/"
-  to = "/pages/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/dashboard.html"
-  to = "/pages/dashboard.html"
-  status = 200
-
-[[redirects]]
-  from = "/dashboard"
-  to = "/pages/dashboard.html"
-  status = 200
-
-[[redirects]]
-  from = "/login.html"
-  to = "/pages/login.html"
-  status = 200
-
-[[redirects]]
-  from = "/login"
-  to = "/pages/login.html"
-  status = 200
-
-[[redirects]]
-  from = "/parent-login.html"
-  to = "/pages/parent-login.html"
-  status = 200
-
-[[redirects]]
-  from = "/parent-login"
-  to = "/pages/parent-login.html"
-  status = 200
-
-[[redirects]]
-  from = "/parent-dashboard.html"
-  to = "/pages/parent-dashboard.html"
-  status = 200
-
-[[redirects]]
-  from = "/parent-dashboard"
-  to = "/pages/parent-dashboard.html"
+  from = "/*"
+  to = "/dashboard.html"
   status = 200
 
 # Set security headers
