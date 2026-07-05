@@ -11,10 +11,25 @@
   # Point to your Render backend
   # API_BASE_URL = "https://your-render-backend.onrender.com/api"
 
-# Redirect all routes to index.html for SPA-like routing
+# Redirect HTML files from root to pages directory (for accessing dashboard.html at /)
 [[redirects]]
-  from = "/*"
+  from = "/dashboard"
   to = "/pages/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/pages/login.html"
+  status = 200
+
+[[redirects]]
+  from = "/parent-login"
+  to = "/pages/parent-login.html"
+  status = 200
+
+[[redirects]]
+  from = "/parent-dashboard"
+  to = "/pages/parent-dashboard.html"
   status = 200
 
 # Set security headers
