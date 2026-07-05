@@ -1,0 +1,16 @@
+[build]
+  command = "echo 'Static site, no build needed'"
+  publish = "frontend"
+
+# SPA routing - redirect all paths to index.html
+[[redirects]]
+  from = "/*"
+  to = "/pages/index.html"
+  status = 200
+
+# Environment-specific settings
+[context.production]
+  environment = { API_BASE_URL = "https://child-vacc-system.onrender.com/api" }
+
+[context.deploy-preview]
+  environment = { API_BASE_URL = "https://child-vacc-system.onrender.com/api" }
