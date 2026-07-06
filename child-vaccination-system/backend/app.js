@@ -25,52 +25,79 @@ const app = express();
 connectDB();
 
 // Middleware
-  app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://127.0.0.1:5500',
-        'http://localhost:5500',
-        'https://child-vacc-system.netlify.app',
-        'https://*.netlify.app'
-    ],
-    credentials: true
+// Configure CORS to accept local dev origins and Netlify deploy previews
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow requests with no origin (e.g., curl, mobile apps, server-to-server)
+    if (!origin) return callback(null, true);
+
+    const allowed = [
+      'http://localhost:3000',
+      'http://127.0.0.1:5500',
+      'http://localhost:5500',
+      'https://child-immunization.netlify.app',
+      // add any other explicit origins here
+    ];
+
+    if (allowed.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+
+    // allow any Netlify subdomain like https://your-site.netlify.app
+    try {
+      const hostname = new URL(origin).hostname;
+      if (/\.netlify\.app$/.test(hostname)) return callback(null, true);
+    } catch (err) {
+      // fallthrough to rejection
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiter
-app.use(apiLimiter);
+// Middleware
+// Configure CORS to accept local dev origins and Netlify deploy previews
+const corsOptions = {
+  origin: (origin, callback) => {
+    // log incoming origin for debugging on the server
+    console.log('CORS origin:', origin);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Child Vaccination System is running' });
-});
+    // allow requests with no origin (e.g., curl, mobile apps, server-to-server)
+    if (!origin) return callback(null, true);
 
-// Routes
-const API_PREFIX = process.env.API_PREFIX || '/api';
+    const allowed = [
+      'http://localhost:3000',
+      'http://127.0.0.1:5500',
+      'http://localhost:5500',
+      'https://child-immunization.netlify.app',
+      // add any other explicit origins here
+    ];
 
-app.use(`${API_PREFIX}/auth`, authRoutes);
-app.use(`${API_PREFIX}/users`, userRoutes);
-app.use(`${API_PREFIX}/children`, childRoutes);
-app.use(`${API_PREFIX}/guardians`, guardianRoutes);
-app.use(`${API_PREFIX}/vaccinations`, vaccinationRoutes);
-app.use(`${API_PREFIX}/appointments`, appointmentRoutes);
-app.use(`${API_PREFIX}/inventory`, inventoryRoutes);
-app.use(`${API_PREFIX}/dashboard`, dashboardRoutes);
-app.use(`${API_PREFIX}/reports`, reportRoutes);
-app.use(`${API_PREFIX}/notifications`, notificationRoutes);
-app.use(`${API_PREFIX}/parent`, parentRoutes);
+    if (allowed.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-  });
-});
+    // allow any Netlify subdomain like https://your-site.netlify.app
+    try {
+      const hostname = new URL(origin).hostname;
+      if (/\.netlify\.app$/.test(hostname)) return callback(null, true);
+    } catch (err) {
+      // fallthrough to rejection
+    }
 
-// Error handler middleware
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+// Ensure OPTIONS preflight requests are handled with the same CORS options
+app.options('*', cors(corsOptions));
 app.use(errorHandler);
 
 module.exports = app;
