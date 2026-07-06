@@ -158,10 +158,16 @@ async function loadChildrenForForm() {
 
 async function loadVaccinesForForm() {
   try {
-    const vaccineNames = ['BCG', 'OPV', 'Pentavalent', 'Measles', 'Rotavirus', 'PCV', 'Hepatitis B'];
+    const response = await getInventory(1, 100);
+    const vaccines = response.data || [];
     const select = document.getElementById('vaccineSelect');
-    
-    vaccineNames.forEach(vaccine => {
+
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Select vaccine...</option>';
+
+    const uniqueVaccines = [...new Set(vaccines.map(vaccine => vaccine.name).filter(Boolean))];
+    uniqueVaccines.forEach(vaccine => {
       const option = document.createElement('option');
       option.value = vaccine;
       option.textContent = vaccine;

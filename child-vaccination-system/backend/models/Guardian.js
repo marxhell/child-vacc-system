@@ -1,5 +1,26 @@
 const mongoose = require('mongoose');
 
+const normalizeRelationship = (value) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  const relationshipMap = {
+    mother: 'Mother',
+    father: 'Father',
+    guardian: 'Guardian',
+    grandparent: 'Grandparent',
+    other: 'Other',
+  };
+
+  return relationshipMap[trimmed.toLowerCase()] || trimmed;
+};
+
 const guardianSchema = new mongoose.Schema(
   {
     name: {
@@ -44,4 +65,14 @@ const guardianSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Guardian', guardianSchema);
+guardianSchema.pre('validate', function (next) {
+  if (this.relationship) {
+    this.relationship = normalizeRelationship(this.relationship);
+  }
+  next();
+});
+
+const Guardian = mongoose.model('Guardian', guardianSchema);
+Guardian.normalizeRelationship = normalizeRelationship;
+
+module.exports = Guardian;
