@@ -29,7 +29,9 @@ connectDB();
     origin: [
         'http://localhost:3000',
         'http://127.0.0.1:5500',
-        'http://localhost:5500'
+        'http://localhost:5500',
+        'https://child-vacc-system.netlify.app',
+        'https://*.netlify.app'
     ],
     credentials: true
 }));

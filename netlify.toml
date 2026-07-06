@@ -1,6 +1,7 @@
 [build]
-  command = "echo 'Static site, no build needed'"
-  publish = "frontend"
+  command = "echo 'Static site - no build required'"
+  publish = "child-vaccination-system/frontend"
+  base = "."
 
 # SPA routing - redirect all paths to index.html
 [[redirects]]
